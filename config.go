@@ -8,8 +8,9 @@ import (
 )
 
 type Config struct {
-	TargetDir    string   `toml:"target_dir"`
-	ExcludeFiles []string `toml:"exclude_files"`
+	TargetDir        string   `toml:"target_dir"`
+	ExcludeFiles     []string `toml:"exclude_files"`
+	CompressionLevel int      `toml:"compression_level"` // 1 (fast) - 9 (slow)
 }
 
 func LoadConfig(path string) (*Config, error) {
@@ -17,8 +18,9 @@ func LoadConfig(path string) (*Config, error) {
 		// Create default config
 		home, _ := os.UserHomeDir()
 		defaultConfig := Config{
-			TargetDir:    filepath.Join(home, "Documents", "TidyArchive"),
-			ExcludeFiles: []string{".DS_Store", "desktop.ini"},
+			TargetDir:        filepath.Join(home, "Documents", "TidyArchive"),
+			ExcludeFiles:     []string{".DS_Store", "desktop.ini"},
+			CompressionLevel: 9, // max compression
 		}
 
 		f, err := os.Create(path)
