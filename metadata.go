@@ -25,8 +25,10 @@ func SaveMetadata(targetDir string, newEntries []FileMetadata) error {
 	var existingEntries []FileMetadata
 
 	// Read existing if exists
-	if data, err := os.ReadFile(path); err != nil && len(data) > 0 {
-		json.Unmarshal(data, &existingEntries)
+	if data, err := os.ReadFile(path); err == nil {
+		if len(data) > 0 {
+			json.Unmarshal(data, &existingEntries)
+		}
 	}
 
 	// Merge old and new

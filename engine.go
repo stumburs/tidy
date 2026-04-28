@@ -35,7 +35,19 @@ func Tidy(conf *Config) error {
 		}
 
 		src := filepath.Join(desktop, item.Name())
-		info, _ := item.Info()
+
+		var totalSize int64
+		if item.IsDir() {
+			totalSize, _ = dirSize(src)
+		} else {
+			info, _ := item.Info()
+			totalSize = info.Size()
+		}
+
+		if totalSize <= 0 {
+			// compress without progress bar
+			totalSize = 1
+		}
 
 		// Destination
 		timestamp := time.Now().Format("20060102_150405")
@@ -43,7 +55,7 @@ func Tidy(conf *Config) error {
 		dest := filepath.Join(conf.TargetDir, newName)
 
 		bar := progressbar.DefaultBytes(
-			info.Size(),
+			totalSize,
 			"Compressing: "+item.Name(),
 		)
 
@@ -63,7 +75,7 @@ func Tidy(conf *Config) error {
 			OriginalName:   item.Name(),
 			NewName:        newName,
 			MovedAt:        time.Now(),
-			OriginalSize:   info.Size(),
+			OriginalSize:   totalSize,
 			CompressedSize: zipInfo.Size(),
 			ItemType:       getItemType(item),
 		})
@@ -189,7 +201,8 @@ func zipSourceWithProgress(source, target string, bar *progressbar.ProgressBar, 
 		}
 		defer file.Close()
 
-		_, err = io.Copy(io.MultiWriter(w, bar), file)
+		proxyReader := io.TeeReader(file, bar)
+		_, err = io.Copy(w, proxyReader)
 		return err
 	})
 }
@@ -199,4 +212,18 @@ func getItemType(item os.DirEntry) string {
 		return "folder"
 	}
 	return "file"
+}
+
+func dirSize(path string) (int64, error) {
+	var size int64
+	err := filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			size += info.Size()
+		}
+		return nil
+	})
+	return size, err
 }
