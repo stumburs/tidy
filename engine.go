@@ -20,6 +20,8 @@ func Tidy(conf *Config) error {
 		return err
 	}
 
+	var batchMetadata []FileMetadata
+
 	for _, item := range items {
 		// Skip excluded files
 		if shouldExclude(item.Name(), conf.ExcludeFiles) {
@@ -53,7 +55,7 @@ func Tidy(conf *Config) error {
 		}
 
 		// Metadata
-		UpdateMetadata(conf.TargetDir, FileMetadata{
+		batchMetadata = append(batchMetadata, FileMetadata{
 			OriginalName: item.Name(),
 			NewName:      newName,
 			MovedAt:      time.Now(),
@@ -61,7 +63,7 @@ func Tidy(conf *Config) error {
 			ItemType:     itemType,
 		})
 	}
-	return nil
+	return SaveMetadata(conf.TargetDir, batchMetadata)
 }
 
 func shouldExclude(name string, excluded []string) bool {

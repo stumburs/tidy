@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -14,18 +15,23 @@ type FileMetadata struct {
 	ItemType     string    `json:"item_type"`
 }
 
-func UpdateMetadata(targetDir string, entry FileMetadata) error {
-	path := targetDir + "/metadata.json"
-	var entries []FileMetadata
+func SaveMetadata(targetDir string, newEntries []FileMetadata) error {
+	if len(newEntries) == 0 {
+		return nil
+	}
+	path := filepath.Join(targetDir, "metadata.json")
+	var existingEntries []FileMetadata
 
 	// Read existing if exists
-	if data, err := os.ReadFile(path); err != nil {
-		json.Unmarshal(data, &entries)
+	if data, err := os.ReadFile(path); err != nil && len(data) > 0 {
+		json.Unmarshal(data, &existingEntries)
 	}
 
-	entries = append(entries, entry)
+	// Merge old and new
+	allEntries := append(existingEntries, newEntries...)
 
-	newData, err := json.MarshalIndent(entries, "", "  ")
+	// Write
+	newData, err := json.MarshalIndent(allEntries, "", "  ")
 	if err != nil {
 		return err
 	}
